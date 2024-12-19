@@ -4,19 +4,21 @@ This repository contains all assignments completed as part of the ERA V3 (Extens
 
 ## Repository Structure
 Each assignment is organized in its own directory with the following structure:  
+```
 ERA_Assignments/   
 ├── Assignment_1/  
-│ ├── README.md 
-| ├── src/  
-│ ├── notebooks/  
-| └── other .py files  
-|
+│   ├── README.md  
+│   ├── src/  
+│   ├── notebooks/  
+│   └── other .py files  
+│
 ├── Assignment_2/  
-│ ├── README.md  
-| ├── src/  
-│ ├── notebooks/  
-| └── other .py files  
+│   ├── README.md  
+│   ├── src/  
+│   ├── notebooks/  
+│   └── other .py files  
 └── ...
+```
 
 ## Getting Started
 
