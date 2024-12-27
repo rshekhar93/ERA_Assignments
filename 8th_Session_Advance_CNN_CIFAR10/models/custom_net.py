@@ -63,7 +63,7 @@ class CustomNet(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(64, 128),
             nn.ReLU(),
-            nn.Dropout(0.25),
+            nn.Dropout(0.2),
             nn.Linear(128, num_classes)
         )
         
