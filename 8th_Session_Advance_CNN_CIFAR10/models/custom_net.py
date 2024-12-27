@@ -39,7 +39,7 @@ class CustomNet(nn.Module):
             nn.ReLU(),
         )
         
-        # C3 Block - Third Convolution Block with Dilation (RF: 13->29->33)
+        # C3 Block - Third Convolution Block with Dilation (RF: 13->29->37)
         self.conv3 = nn.Sequential(
             nn.Conv2d(40, 64, kernel_size=3, padding=4, dilation=4),  # 14x14 -> 14x14
             nn.BatchNorm2d(64),
@@ -49,7 +49,7 @@ class CustomNet(nn.Module):
             nn.ReLU(),
         )
         
-        # C40 Block - Final Block with Output (RF: 33->41->41)
+        # C40 Block - Final Block with Output (RF: 37->49->49)
         self.conv4 = nn.Sequential(
             nn.Conv2d(80, 96, kernel_size=3, padding=3, dilation=3),  # 14x14 -> 14x14
             nn.BatchNorm2d(96),
