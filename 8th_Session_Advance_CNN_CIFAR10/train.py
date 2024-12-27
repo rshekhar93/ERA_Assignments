@@ -15,6 +15,7 @@ def main():
     model = CustomNet().to(device)
     
     # Print model summary
+    print("\nModel Architecture:")
     summary(model, input_size=(3, 32, 32))
     
     # Get dataloaders
@@ -40,7 +41,7 @@ def main():
             best_acc = test_acc
             torch.save(model.state_dict(), 'best_model.pth')
             
-        print(f"Epoch {epoch}: Train Acc: {train_acc:.2f}%, Test Acc: {test_acc:.2f}%")
+        # print(f"Epoch {epoch}: Train Acc: {train_acc:.2f}%, Test Acc: {test_acc:.2f}%")
 
 if __name__ == '__main__':
     main() 
