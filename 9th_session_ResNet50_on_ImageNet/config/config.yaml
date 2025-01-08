@@ -1,0 +1,25 @@
+training:
+  batch_size: 256
+  num_epochs: 90
+  learning_rate: 0.1
+  momentum: 0.9
+  weight_decay: 1e-4
+  lr_schedule:
+    milestones: [30, 60, 80]
+    gamma: 0.1
+
+data:
+  train_path: "/path/to/imagenet/train"
+  val_path: "/path/to/imagenet/val"
+  num_workers: 8
+  input_size: 224
+  use_subset: true  # Set to false for full ImageNet
+  subset_size: 100000  # Number of training samples to use if use_subset is true
+
+model:
+  name: "resnet50"
+  num_classes: 1000
+
+logging:
+  save_dir: "experiments"
+  log_interval: 100 
