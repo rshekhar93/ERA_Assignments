@@ -5,8 +5,8 @@ A Byte Pair Encoding (BPE) tokenizer specifically designed for the Hindi languag
 ## Features
 
 - Custom BPE implementation for Hindi text
-- Vocabulary size < 5000 tokens
-- Compression ratio > 3.2
+- Vocabulary size: 5000 tokens
+- Compression ratio: 3.49
 - Efficient encoding and decoding
 - Support for special tokens (PAD, UNK, BOS, EOS)
 - Web interface using Gradio
