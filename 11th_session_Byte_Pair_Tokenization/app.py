@@ -24,7 +24,8 @@ def process_text(text: str, mode: str) -> str:
     if mode == "Encode":
         tokens = tokenizer.encode(text)
         ratio = tokenizer.get_compression_ratio(text)
-        return (f"Token IDs: {tokens}\n"
+        return (f"Original Text: {text}\n\n"
+                f"Token IDs: {tokens}\n"
                 f"Number of tokens: {len(tokens)}\n"
                 f"Compression ratio: {ratio:.2f}\n"
                 f"Vocabulary size: {len(tokenizer.token_to_id)}")
@@ -60,18 +61,18 @@ demo = gr.Interface(
     A Byte Pair Encoding (BPE) based tokenizer for Hindi text.
     
     Features:
-    - Vocabulary size: <5000 tokens
-    - Compression ratio: >3.2
-    - Trained on OSCAR Hindi corpus
+    - Vocabulary size: 5000 tokens
+    - Compression ratio: 3.49.
+    - Trained on wikipedia Hindi corpus
     
     Examples:
-    1. Encode: Enter Hindi text like "भारत एक विशाल देश है"
-    2. Decode: Enter space-separated token IDs like "1958 1783 3939 1760 1977 1815"
+    1. Encode: Enter Hindi text like "मैं हिंदी में लिख रहा हूं"
+    2. Decode: Enter space-separated token IDs like "4421 3541 1747 2395 32 2513 3355 1737"
     """,
     examples=[
         ["नमस्ते दुनिया", "Encode"],
-        ["भारत एक विशाल देश है", "Encode"],
-        ["1958 1783 3939 1760 1977 1815", "Decode"]
+        ["मैं हिंदी में लिख रहा हूं", "Encode"],
+        ["4421 3541 1747 2395 32 2513 3355 1737", "Decode"]
     ]
 )
 

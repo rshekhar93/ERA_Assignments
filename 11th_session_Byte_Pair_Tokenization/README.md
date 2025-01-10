@@ -12,6 +12,17 @@ A Byte Pair Encoding (BPE) tokenizer specifically designed for the Hindi languag
 - Web interface using Gradio
 - Comprehensive training statistics
 
+## Corpus Statistics:
+> Source: Hindi Wikipedia articles  
+Total articles processed: 8500  
+Total sentences: 100,000  
+Total characters: 13,094,092  
+Total words: 2,430,995  
+Unique words: 199,491  
+Average sentence length: 130.9 characters  
+Average words per sentence: 24.3  
+Corpus file size: 50.33 MB  
+
 ## Project Structure
 
 ```
@@ -113,11 +124,3 @@ print(f"Encoded tokens: {tokens}")
 print(f"Decoded text: {tokenizer.decode(tokens)}")
 print(f"Compression ratio: {tokenizer.get_compression_ratio(text):.2f}")
 ```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.

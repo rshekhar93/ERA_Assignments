@@ -42,13 +42,18 @@ def analyze_corpus(corpus: list) -> dict:
         'top_words': word_freq.most_common(10)
     }
 
-def train_and_evaluate_tokenizer(num_sentences=100000, target_compression=3.0):
+def train_and_evaluate_tokenizer(num_sentences=100000, target_compression=3.3):
     """
     Train the tokenizer and evaluate its performance
     Args:
         num_sentences: Number of sentences to use for training
-        target_compression: Target compression ratio
+        target_compression: Target compression ratio (must be >= 3.3)
     """
+    # Validate parameters
+    if target_compression < 3.3:
+        print("Warning: Target compression ratio must be at least 3.3. Setting to 3.3.")
+        target_compression = 3.3
+    
     # Create directories
     os.makedirs('models', exist_ok=True)
     
@@ -86,11 +91,17 @@ def train_and_evaluate_tokenizer(num_sentences=100000, target_compression=3.0):
     
     # Initialize and train tokenizer
     print("\nInitializing tokenizer...")
-    tokenizer = HindiBPETokenizer(target_compression=target_compression)
+    tokenizer = HindiBPETokenizer(target_compression=target_compression, max_vocab_size=5000)
     
     # Train the tokenizer
     print("Training tokenizer...")
     tokenizer.train(corpus)
+    
+    # Verify requirements are met
+    vocab_size = len(tokenizer.token_to_id)
+    if vocab_size > 5000:
+        print(f"\nError: Vocabulary size ({vocab_size}) exceeds maximum limit of 5000 tokens!")
+        return
     
     # Save the trained tokenizer
     model_path = 'models/hindi_tokenizer.json'
@@ -128,11 +139,16 @@ def train_and_evaluate_tokenizer(num_sentences=100000, target_compression=3.0):
         print("-" * 80)
     
     avg_compression = total_compression / len(test_sentences)
-    print(f"\nAverage compression ratio: {avg_compression:.2f}")
-    print(f"Vocabulary size: {len(tokenizer.token_to_id)}")
+    print(f"\nFinal Results:")
+    print(f"Vocabulary size: {len(tokenizer.token_to_id)} tokens")
+    print(f"Average compression ratio: {avg_compression:.2f}")
+    
+    # Final verification
+    if avg_compression < 3.3:
+        print("\nWarning: Final compression ratio is below target of 3.3!")
 
 if __name__ == "__main__":
     train_and_evaluate_tokenizer(
         num_sentences=100000,    # Number of sentences to use for training
-        target_compression=3.0   # Target compression ratio
+        target_compression=3.3   # Target compression ratio
     ) 

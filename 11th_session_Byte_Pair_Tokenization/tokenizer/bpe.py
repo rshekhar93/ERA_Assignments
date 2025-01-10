@@ -7,12 +7,12 @@ from tqdm import tqdm
 import random
 
 class HindiBPETokenizer:
-    def __init__(self, target_compression: float = 3.0, max_vocab_size: int = 50000):
+    def __init__(self, target_compression: float = 3.3, max_vocab_size: int = 5000):
         """
         Initialize Hindi BPE Tokenizer
         Args:
-            target_compression: Target compression ratio (default: 3.0)
-            max_vocab_size: Maximum vocabulary size (default: 50000)
+            target_compression: Target compression ratio (default: 3.3)
+            max_vocab_size: Maximum vocabulary size (default: 5000)
         """
         self.target_compression = target_compression
         self.max_vocab_size = max_vocab_size
@@ -32,89 +32,79 @@ class HindiBPETokenizer:
         self.token_to_id = self.special_tokens.copy()
         self.id_to_token = {v: k for k, v in self.special_tokens.items()}
     
-    def _calculate_avg_compression(self, sample_texts: List[str], num_samples: int = 100) -> float:
-        """
-        Calculate average compression ratio on sample texts
-        Args:
-            sample_texts: List of texts to sample from
-            num_samples: Number of samples to use
-        Returns:
-            Average compression ratio
-        """
-        if len(sample_texts) > num_samples:
-            texts = random.sample(sample_texts, num_samples)
-        else:
-            texts = sample_texts
-        
-        total_compression = 0
-        for text in texts:
-            tokens = self.encode(text)
-            compression = len(text) / len(tokens)
-            total_compression += compression
-        
-        return total_compression / len(texts)
+    def _calculate_compression(self, sample_texts: List[str]) -> float:
+        """Calculate compression ratio on sample texts"""
+        total_chars = sum(len(text) for text in sample_texts)
+        total_tokens = sum(len(self.encode(text)) for text in sample_texts)
+        return total_chars / total_tokens if total_tokens > 0 else 0
     
     def train_from_frequencies(self, word_freqs: Dict[str, int], sample_texts: List[str]):
-        """
-        Train BPE tokenizer using pre-computed word frequencies
-        Args:
-            word_freqs: Dictionary of word frequencies
-            sample_texts: List of texts to calculate compression ratio
-        """
-        # Initialize vocabulary with characters
+        """Train BPE tokenizer using pre-computed word frequencies"""
+        # Initialize with characters
         chars = set()
         for word in word_freqs.keys():
             chars.update(word.split())
         
-        # Add characters to vocabulary
-        for char in sorted(chars):
+        # Add frequent characters to vocabulary
+        char_freqs = defaultdict(int)
+        for word, freq in word_freqs.items():
+            for char in word.split():
+                char_freqs[char] += freq
+        
+        # Keep top 200 characters
+        top_chars = sorted(char_freqs.items(), key=lambda x: x[1], reverse=True)[:200]
+        for char, _ in top_chars:
             if char not in self.token_to_id:
                 self.token_to_id[char] = len(self.token_to_id)
                 self.id_to_token[len(self.id_to_token)] = char
         
-        # Print initial statistics
-        print(f"\nInitial statistics:")
-        print(f"Number of unique characters (initial tokens): {len(chars)}")
-        print(f"Number of unique words before BPE: {len(word_freqs)}")
-        print(f"Total vocabulary size (including special tokens): {len(self.token_to_id)}\n")
+        print(f"\nInitial Statistics:")
+        print(f"Characters in vocabulary: {len(self.token_to_id)}")
         
         # BPE training loop
         pbar = tqdm(total=self.max_vocab_size, desc="Training BPE")
-        current_vocab_size = len(self.token_to_id)
         
-        while current_vocab_size < self.max_vocab_size:
-            # Check compression ratio every 100 merges
-            if current_vocab_size % 100 == 0:
-                avg_compression = self._calculate_avg_compression(sample_texts)
-                pbar.set_postfix({'compression': f'{avg_compression:.2f}'})
-                
-                if avg_compression >= self.target_compression:
-                    print(f"\nReached target compression ratio: {avg_compression:.2f}")
-                    break
-            
+        # Sample texts for compression calculation
+        eval_texts = random.sample(sample_texts, min(1000, len(sample_texts)))
+        
+        while len(self.token_to_id) < self.max_vocab_size:
+            # Get character pairs and their frequencies
             pairs = get_char_pairs(word_freqs)
             if not pairs:
                 break
             
+            # Get most frequent pair
             best_pair = max(pairs.items(), key=lambda x: x[1])[0]
+            
+            # Add to vocabulary
             self.merges[best_pair] = len(self.token_to_id)
             self.token_to_id[best_pair[0] + best_pair[1]] = len(self.token_to_id)
             self.id_to_token[len(self.id_to_token)] = best_pair[0] + best_pair[1]
             
-            # Update word frequencies with merged pairs
+            # Update word frequencies
             word_freqs = merge_pairs(word_freqs, best_pair)
-            current_vocab_size = len(self.token_to_id)
+            
+            # Check compression ratio every 100 merges
+            if len(self.token_to_id) % 100 == 0:
+                compression = self._calculate_compression(eval_texts)
+                pbar.set_postfix({'compression': f'{compression:.2f}'})
+                
+                if compression >= self.target_compression:
+                    print(f"\nReached target compression ratio: {compression:.2f}")
+                    break
+            
             pbar.update(1)
         
         pbar.close()
-        print(f"Final vocabulary size: {len(self.token_to_id)}")
+        
+        # Final statistics
+        compression = self._calculate_compression(eval_texts)
+        print(f"\nFinal Statistics:")
+        print(f"Vocabulary size: {len(self.token_to_id)}")
+        print(f"Compression ratio: {compression:.2f}")
     
     def train(self, corpus: List[str]):
-        """
-        Train BPE tokenizer on Hindi corpus
-        Args:
-            corpus: List of Hindi sentences
-        """
+        """Train BPE tokenizer on Hindi corpus"""
         print("Computing word frequencies...")
         word_freqs = defaultdict(int)
         for text in tqdm(corpus, desc="Processing sentences"):
@@ -160,16 +150,41 @@ class HindiBPETokenizer:
         Returns:
             Decoded Hindi text
         """
-        text = []
+        # Convert tokens to text
+        words = []
+        current_word = []
+        
         for token in tokens:
             if token in self.id_to_token:
-                text.append(self.id_to_token[token])
+                token_text = self.id_to_token[token]
+                
+                # Skip special tokens
+                if token_text in ['<PAD>', '<UNK>', '<BOS>', '<EOS>']:
+                    continue
+                    
+                # If token contains end of word marker
+                if '</w>' in token_text:
+                    # Remove </w> and add to current word
+                    token_text = token_text.replace('</w>', '')
+                    # Skip if token is not Hindi (contains ASCII characters)
+                    if not any(ord(c) > 127 for c in token_text) and token_text not in ['।', '॥']:
+                        continue
+                    current_word.append(token_text)
+                    # Join subwords and add to words list
+                    words.append(''.join(current_word))
+                    current_word = []
+                else:
+                    # Skip if token is not Hindi (contains ASCII characters)
+                    if not any(ord(c) > 127 for c in token_text) and token_text not in ['।', '॥']:
+                        continue
+                    current_word.append(token_text)
         
-        # Remove special tokens and join
-        text = ' '.join(text)
-        text = text.replace(' </w>', '')
-        text = re.sub(r'\s+', '', text)
-        return text
+        # Handle any remaining subwords
+        if current_word:
+            words.append(''.join(current_word))
+        
+        # Join words with spaces
+        return ' '.join(words)
     
     def get_compression_ratio(self, text: str) -> float:
         """
